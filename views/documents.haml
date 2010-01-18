@@ -1,0 +1,25 @@
+%h3
+  %a{ :href => "/databases" }= session[:host]
+  &gt;
+  %a{ :href => "/database/#{@database}/collections" }= @database
+  &gt;
+  = @collection
+
+%p
+  %a{ :href => "/database/#{@database}/collection/#{@collection}/drop", :onclick => 'return confirm("Are you sure?");' } Delete this collection
+
+- if flash[:error]
+  %p= flash[:error]
+
+- if @documents
+  %table{ :border => 1, :cellpadding => 5, :cellspacing => 0 }
+    %tr
+      %th Key
+      %th Value
+
+    - @documents.each do |document|
+      - document_id = document.delete('_id')
+      %tr
+        %td
+          %a{ :href => "/database/#{@database}/collection/#{@collection}/document/#{document_id}" }= document_id
+        %td= document.inspect

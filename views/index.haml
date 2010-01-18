@@ -1,0 +1,19 @@
+%form{ :method => 'post', :action => '/', :id => 'connection_form' }
+  - if flash[:error]
+    %p= flash[:error]
+
+  %p
+    %label{ :for => 'host' } Host
+    %input{ :type => 'text', :name => 'host', :id => 'host', :value => 'localhost' }
+  %p
+    %label{ :for => 'port' } Port
+    %input{ :type => 'text', :name => 'port', :id => 'port', :value => '27017' }
+  %p
+    %label{ :for => 'user' } User
+    %input{ :type => 'text', :name => 'user', :id => 'user' }
+  %p
+    %label{ :for => 'password' } Password
+    %input{ :type => 'text', :name => 'password', :id => 'password' }
+
+  %p
+    %button{ :type => 'submit' } Connect

@@ -1,0 +1,27 @@
+%h3
+  %a{ :href => "/databases" }= session[:host]
+  &gt;
+  %a{ :href => "/database/#{@database}/collections" }= @database
+  &gt;
+  %a{ :href => "/database/#{@database}/collection/#{@collection}/documents" }= @collection
+  &gt;
+  = @document['_id']
+
+%p
+  %a{ :href => "/database/#{@database}/collection/#{@collection}/document/#{@document['_id']}/drop", :onclick => 'return confirm("Are you sure?");' } Delete this document
+
+%table{ :border => 1, :cellpadding => 5, :cellspacing => 0 }
+  %tr
+    %th Key
+    %th Value
+    %th &nbsp;
+
+  - @document.each do |key, value|
+    %tr
+      %td= key
+      %td= value
+      %td
+        - if key == '_id'
+          &nbsp;
+        - else
+          %a{ :href => '#' } Delete

@@ -1,0 +1,13 @@
+%h3
+  %a{ :href => "/databases" }= session[:host]
+  &gt;
+  = @database
+
+%p
+  %a{ :href => "/database/#{@database}/drop", :onclick => 'return confirm("Are you sure?");' } Delete this database
+
+- if @collections
+  %ul
+  - @collections.each do |collection|
+    %li
+      %a{ :href => "/database/#{@database}/collection/#{collection}/documents" }= collection

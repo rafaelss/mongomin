@@ -1,0 +1,7 @@
+%h3= session[:host]
+
+- if @databases
+  %ul
+    - @databases.each do |database|
+      %li
+        %a{ :href => "/database/#{database}/collections" }= database
