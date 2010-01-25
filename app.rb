@@ -4,9 +4,18 @@ require 'mongo'
 require 'rack-flash'
 require 'logger'
 require 'less'
+require 'coderay'
+require 'json'
+require 'will_paginate'
+require 'will_paginate/view_helpers'
+require 'sinatra/url_for'
+require 'sinatra/static_assets'
 
 class App < Sinatra::Base
   use Rack::Flash
+  helpers WillPaginate::ViewHelpers
+  helpers Sinatra::UrlForHelper
+  register Sinatra::StaticAssets
 
   enable :sessions
 
@@ -31,8 +40,16 @@ class App < Sinatra::Base
 
   get '/database/:name/collection/:collection/documents' do
     @database = params['name']
-    @collection = params['collection']
-    @documents = connection.db(@database).collection(@collection).find
+    @collection_name = params['collection']
+
+    page = (params[:page] || 1).to_i
+    @collection = connection.db(@database).collection(@collection_name)
+    documents = @collection.find({}, :skip => (page-1)*30, :limit => 30)
+
+    @page_results = WillPaginate::Collection.create(page, 30, documents.count) do |pager|
+       pager.replace(documents.to_a)
+    end
+
     haml :documents
   end
 
@@ -92,7 +109,45 @@ class App < Sinatra::Base
     Less::Engine.new(File.new(path)).to_css
   end
 
+  def content_tag(name, content_or_options_with_block = nil, options = nil, &block)
+    if block_given?
+      options = content_or_options_with_block if content_or_options_with_block.is_a?(Hash)
+      content = capture(&block)
+      concat(content_tag_string(name, content, options), block.binding)
+    else
+      content = content_or_options_with_block
+      content_tag_string(name, content, options)
+    end
+  end
+
+  def url_for(options)
+    if options.is_a?(Hash)
+      super("#{request.path}?page=#{options['page']}")
+    else
+      super(options)
+    end
+  end
+
   private
+
+  def content_tag_string(name, content, options)
+    tag_options = options ? tag_options(options) : ""
+    "<#{name}#{tag_options}>#{content}</#{name}>"
+  end
+
+  def tag_options(options)
+    cleaned_options = convert_booleans(options.stringify_keys.reject {|key, value| value.nil?})
+    ' ' + cleaned_options.map {|key, value| %(#{key}="#{escape_once(value)}")}.sort * ' ' unless cleaned_options.empty?
+  end
+
+  def convert_booleans(options)
+    %w( disabled readonly multiple ).each { |a| boolean_attribute(options, a) }
+    options
+  end
+
+  def boolean_attribute(options, attribute)
+    options[attribute] ? options[attribute] = attribute : options.delete(attribute)
+  end
 
   def stylesheet(name)
     mtime = File.mtime(File.join(File.expand_path('.'), "views", "less", "#{File.basename(name, '.css')}.less")).to_i
@@ -103,13 +158,14 @@ class App < Sinatra::Base
     session[:host] ||= host
     session[:port] ||= port
     session[:port] = Mongo::Connection::DEFAULT_PORT.to_s if session[:port].empty?
-    session[:user] ||= params['user'] if !params['user'].empty?
-    session[:password] ||= params['password'] if !params['password'].empty?
+    # session[:user] ||= params['user'] if !params['user'].empty?
+    # session[:password] ||= params['password'] if !params['password'].empty?
 
     @db ||= Mongo::Connection.new(session[:host], session[:port], :logger => Logger.new(STDOUT))
 
-    if session[:user] and !session[:user].empty?
-      @db.authenticate
-    end
+    # if session[:user] and !session[:user].empty?
+    #   @db.authenticate
+    # end
+    @db
   end
 end

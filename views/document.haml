@@ -19,7 +19,7 @@
   - @document.each do |key, value|
     %tr
       %td= key
-      %td= value
+      %td= CodeRay.scan(value.to_json, :json).div
       %td
         - if key == '_id'
           &nbsp;

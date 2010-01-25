@@ -3,23 +3,41 @@
   &gt;
   %a{ :href => "/database/#{@database}/collections" }= @database
   &gt;
-  = @collection
+  = @collection_name
 
 %p
-  %a{ :href => "/database/#{@database}/collection/#{@collection}/drop", :onclick => 'return confirm("Are you sure?");' } Delete this collection
+  %a{ :href => "/database/#{@database}/collection/#{@collection_name}/drop", :onclick => 'return confirm("Are you sure?");' } Delete this collection
 
 - if flash[:error]
   %p= flash[:error]
 
-- if @documents
+- if @page_results
+  - pagination = will_paginate @page_results
+
+  .pagination= pagination
+
   %table{ :border => 1, :cellpadding => 5, :cellspacing => 0 }
     %tr
       %th Key
       %th Value
 
-    - @documents.each do |document|
+    - @page_results.each do |document|
       - document_id = document.delete('_id')
       %tr
         %td
-          %a{ :href => "/database/#{@database}/collection/#{@collection}/document/#{document_id}" }= document_id
-        %td= document.inspect
+          %a{ :href => "/database/#{@database}/collection/#{@collection_name}/document/#{document_id}" }= document_id
+        %td= CodeRay.scan(document.to_json, :json).div
+
+  .pagination= pagination
+
+%h4 Index information
+%table{ :border => 1, :cellpadding => 5, :cellspacing => 0, :class => 'index_info' }
+  %tr
+    %th Name
+    %th Fields
+    %th Direction
+  - @collection.index_information.each do |key, index|
+    %tr
+      %td= key
+      %td= index[0][0]
+      %td= index[0][1] == Mongo::ASCENDING ? 'ASC' : 'DESC'
